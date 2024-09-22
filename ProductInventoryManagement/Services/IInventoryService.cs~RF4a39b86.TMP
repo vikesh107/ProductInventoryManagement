@@ -1,0 +1,17 @@
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using ProductInventoryManagement.Models;
+
+namespace ProductInventoryManagement.Services
+{
+    public interface IInventoryService
+    {
+        Task<IEnumerable<Inventory>> GetInventoriesAsync();
+        Task<Inventory> GetInventoryByIdAsync(int id);
+        Task AddInventoryAsync(Inventory inventory);
+        Task UpdateInventoryAsync(Inventory inventory);
+        Task DeleteInventoryAsync(int id);
+        Task AddQuantityAsync(int productId, int quantity);
+        Task ReduceQuantityAsync(int productId, int quantity);
+    }
+}

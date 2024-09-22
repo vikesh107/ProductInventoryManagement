@@ -1,0 +1,119 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ProductInventoryManagement.DTOs;
+using ProductInventoryManagement.Models;
+using ProductInventoryManagement.Services;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace ProductInventoryManagement.Controllers
+{
+    [ApiController]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [ApiVersion("1.0")] // Specify the version
+    public class InventoryController : ControllerBase
+    {
+        private readonly IInventoryService _inventoryService;
+        private readonly IInventoryAuditService _inventoryAuditService;
+
+        public InventoryController(IInventoryService inventoryService, IInventoryAuditService inventoryAuditService)
+        {
+            _inventoryService = inventoryService;
+            _inventoryAuditService = inventoryAuditService;
+        }
+
+
+        [Authorize(Roles = "Admin,User")]
+        [HttpGet]
+        public async Task<IActionResult> GetInventories()
+        {
+            var inventories = await _inventoryService.GetInventoriesAsync();
+            return Ok(inventories);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> AddInventory([FromBody] InventoryDTO inventory)
+        {
+            await _inventoryService.AddInventoryAsync(inventory);
+            return NoContent();
+        }
+
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateInventory(Guid id, [FromBody] InventoryDTO inventory)
+        {
+            inventory.InventoryID = id; // Ensure the ID matches
+            await _inventoryService.UpdateInventoryAsync(inventory);
+            return NoContent();
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteInventory(Guid id)
+        {
+            await _inventoryService.DeleteInventoryAsync(id);
+            return NoContent();
+        }
+
+        // PATCH: api/inventory/addquantity
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("addquantity")]
+        public async Task<IActionResult> AddQuantity([FromQuery] Guid productId, [FromQuery] int quantity)
+        {
+            await _inventoryService.AddQuantityAsync(productId, quantity);
+            return NoContent();
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("reducequantity")]
+        public async Task<IActionResult> ReduceQuantity([FromQuery] Guid productId, [FromQuery] int quantity)
+        {
+            await _inventoryService.ReduceQuantityAsync(productId, quantity);
+            return NoContent();
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("getInventoryByProductId")]
+        public async Task<IActionResult> GetInventoryByProductId([FromQuery] Guid productId)
+        {
+            var data = await _inventoryService.GetInventoryByProductIdAsync(productId);
+            return Ok(data);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("CheckInventory")]
+        public async Task<IActionResult> CheckInventory()
+        {
+            var inventryCount = await _inventoryService.CheckLowInventoryAsync();
+            if(inventryCount)
+                return Ok("Inventory check completed. Check this In Log File");
+            return Ok("Inventory check completed Quntity Are Good");
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("{inventoryId}")]
+        public async Task<IActionResult> GetAuditsAsync(Guid inventoryId)
+        {
+            var audit = await _inventoryAuditService.GetAuditsAsync(inventoryId);
+            if (audit == null)
+            {
+                return NotFound($"No audit record found for Inventory ID: {inventoryId}");
+            }
+            return Ok(audit);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("{inventoryId}/record-transaction")]
+        public async Task<IActionResult> RecordTransactionAsync(Guid inventoryId, [FromBody] InventoryAudit transactionDto)
+        {
+            if (transactionDto == null)
+            {
+                return BadRequest("Transaction data is required.");
+            }
+            await _inventoryAuditService.RecordTransactionAsync(inventoryId, transactionDto.AdjustedQuantity, transactionDto.Reason, transactionDto.User);
+            return CreatedAtAction(nameof(GetAuditsAsync), new { inventoryId }, null);
+        }
+    }
+}

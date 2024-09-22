@@ -1,0 +1,76 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ProductInventoryManagement.Models;
+using ProductInventoryManagement.Services;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace ProductInventoryManagement.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class InventoryController : ControllerBase
+    {
+        private readonly IInventoryService _inventoryService;
+
+        public InventoryController(IInventoryService inventoryService)
+        {
+            _inventoryService = inventoryService;
+        }
+
+        // GET: api/inventory
+        [Authorize(Roles = "Admin,User")]
+        [HttpGet]
+        public async Task<IActionResult> GetInventories()
+        {
+            var inventories = await _inventoryService.GetInventoriesAsync();
+            return Ok(inventories);
+        }
+
+        // POST: api/inventory
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> AddInventory([FromBody] Inventory inventory)
+        {
+            await _inventoryService.AddInventoryAsync(inventory);
+            return NoContent();
+        }
+
+        // PUT: api/inventory/{id}
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateInventory(Guid id, [FromBody] Inventory inventory)
+        {
+            inventory.InventoryID = id; // Ensure the ID matches
+            await _inventoryService.UpdateInventoryAsync(inventory);
+            return NoContent();
+        }
+
+        // DELETE: api/inventory/{id}
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteInventory(Guid id)
+        {
+            await _inventoryService.DeleteInventoryAsync(id);
+            return NoContent();
+        }
+
+        // PATCH: api/inventory/addquantity
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("addquantity")]
+        public async Task<IActionResult> AddQuantity([FromQuery] Guid productId, [FromQuery] int quantity)
+        {
+            await _inventoryService.AddQuantityAsync(productId, quantity);
+            return NoContent();
+        }
+
+        // PATCH: api/inventory/reducequantity
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("reducequantity")]
+        public async Task<IActionResult> ReduceQuantity([FromQuery] Guid productId, [FromQuery] int quantity)
+        {
+            await _inventoryService.ReduceQuantityAsync(productId, quantity);
+            return NoContent();
+        }
+    }
+}

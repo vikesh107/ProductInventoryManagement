@@ -1,0 +1,6 @@
+﻿namespace ProductInventoryManagement.Repositories
+{
+    public class ProductCategoryRepository
+    {
+    }
+}

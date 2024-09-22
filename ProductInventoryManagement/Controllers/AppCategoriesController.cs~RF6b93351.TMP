@@ -1,0 +1,62 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using ProductInventoryManagement.DTO;
+using ProductInventoryManagement.Models;
+using ProductInventoryManagement.Services;
+
+namespace ProductInventoryManagement.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AppCategoriesController : ControllerBase
+    {
+        private readonly ICategoryService _categoryService;
+
+        public AppCategoriesController(ICategoryService categoryService)
+        {
+            _categoryService = categoryService;
+        }
+
+        // POST: api/appcategory
+        [HttpPost]
+        public async Task<ActionResult> AddCategory([FromBody] AddCategoryModel model)
+        {
+            var category  = await _categoryService.AddCategoryAsync(model);
+            return Ok();
+        }
+
+        // PUT: api/appcategory/{id}
+        [HttpPut("{id}")]
+        public async Task<ActionResult<bool>> UpdateCategory(Guid id, [FromBody] UpdateCategoryModel model)
+        {
+            var data = await _categoryService.UpdateCategoryAsync(id, model);
+            return Ok(data);
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> GetAllategories()
+        {
+            var data = await _categoryService.GetAllCategoriesAsync();
+            return Ok(data);
+        }
+
+        // GET: api/appcategory/{id}
+        [HttpGet("{id}")]
+        public async Task<ActionResult<CategoryDTO>> GetCategoryById(Guid id)
+        {
+            var category = await _categoryService.GetCategoryByIdAsync(id);
+            if (category == null)
+            {
+                return NotFound();
+            }
+            return category;
+        }
+
+        // DELETE: api/appcategory/{id}
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteCategory(Guid id)
+        {
+            await _categoryService.DeleteCategoryAsync(id);
+                return NoContent();
+        }
+    }
+}

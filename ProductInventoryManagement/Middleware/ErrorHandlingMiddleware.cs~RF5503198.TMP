@@ -1,0 +1,6 @@
+﻿namespace ProductInventoryManagement.Middleware
+{
+    public class ErrorHandlingMiddleware
+    {
+    }
+}
